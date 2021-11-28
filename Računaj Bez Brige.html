@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Računaj bez brige</title>
+	<meta charset="utf-8">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Overpass&display=swap');
+		
+		.container-fluid,.col-12{
+			display: flex;
+			align-items: center;
+			justify-content: center;		
+		}
+
+		.col-12{
+			height: auto;
+			margin-bottom: 10px;
+		}
+
+
+		label,#childAge,#childAgeMonths,#premature,#childAgePremature{
+			font-size: large;
+			font-family: 'Overpass', sans-serif;
+		}
+
+		#birthday,#birthdayPremature{
+			font-weight: 500;
+		}
+
+
+
+	</style>
+</head>
+<body>
+	<div class="container-fluid min-vh-100">
+		<div class="row w-50 border border-secondary">
+			<div class="col-12 text-center alert alert-info" role="alert">
+				<label for="birthday">Odaberite datum rođenja djeteta:</label>
+			</div>
+			<div class="col-12">
+				<input type="date" id="birthday" name="birthday">
+			</div>	
+			<div class="col-12 text-center alert alert-warning" role="alert" id="premature">
+				<p>Ako je dijete rođeno ranije upišite koliko ili odaberite datum kad se trebalo roditi. Ako nije, ostavite prazno.</p>
+			</div>	
+			
+			<div class="input-group mb-3">
+				<input type="number" class="form-control w-50" min="0" id="prematureBirthNumber" placeholder="Upišite Vrijednost">
+			
+				<select class="form-select w-50" id="prematureBirthValue" name="prematureBirthValue">
+					<option value="">Odaberi</option>
+					<option value="day">Dan(a)</option>
+					<option value="week">Tjedan(a)</option>
+					<option value="month">Mjesec(a)</option>
+				</select>
+				</div>
+			<div class="col-12">
+				<input type="date" id="birthdayPremature" name="birthdayPremature">
+			</div>	
+
+			
+			<div class="col-12 text-center" id="childAge"></div>
+			<div class="col-12 text-center" id="childAgeMonths"></div>
+			<div class="col-12 text-center" id="childAgePremature"></div>
+			
+		</div>
+		
+	</div>
+	
+
+	<script type="text/javascript">
+
+		class DayMonthYear{
+			constructor(input){
+				this.childAgeInDays = Math.round(input / (1000*60*60*24));
+				this.childAgeInMonths = Math.floor(this.childAgeInDays/30.4375);
+				this.childAgeInYears = Math.floor(this.childAgeInMonths/12);
+
+				this.childAgeInMonthsRemainder = this.childAgeInMonths - (this.childAgeInYears*12);
+				this.childAgeInDaysRemainder = Math.floor(this.childAgeInDays - (this.childAgeInYears*365.25) - (this.childAgeInMonthsRemainder*30.4375));
+
+				this.childAgeInYearsString = this.childAgeInYears === 0 ? "" : this.childAgeInYears + "G ";
+				this.childAgeInMonthsRemainderString = this.childAgeInMonthsRemainder === 0 ? "" : this.childAgeInMonthsRemainder + "M ";
+				this.childAgeInDaysRemainderString = this.childAgeInDaysRemainder === 0 ? "" : this.childAgeInDaysRemainder + "D";
+				this.childAgeInMonthsString = this.childAgeInMonths === 0 ? "" : this.childAgeInMonths + "M ";
+			}
+
+
+		}
+
+		function childAgeCalculator(input){
+				let childAgeElement = document.getElementById("childAge");
+				let childAgeInMonthsElement = document.getElementById("childAgeMonths");
+				
+				let selectedDate = new Date(input);
+				let currentDate = new Date();
+
+				currentDate.setHours(0,0,0,0);
+
+				let differenceInTime = currentDate.getTime() - selectedDate.getTime();
+				let DMY = new DayMonthYear(differenceInTime);							
+
+
+				//Show child age in years,months,days
+				childAgeElement.innerHTML = currentDate.getTime() <= selectedDate.getTime() ? "<p>Krivi odabir!</p>" : "<p>Dijete je staro " + DMY.childAgeInYearsString  + DMY.childAgeInMonthsRemainderString + DMY.childAgeInDaysRemainderString + "</p>";
+
+
+				//Show child age in months and days
+				childAgeInMonthsElement.innerHTML = currentDate.getTime() <= selectedDate.getTime() || DMY.childAgeInYears < 1  ? "" : "<p>Preračunato u mjesece dijete je staro " + DMY.childAgeInMonthsString + DMY.childAgeInDaysRemainderString + "</p>";
+
+				childAgeElement.classList.add("alert", "alert-info");
+				childAgeInMonthsElement.classList.add("alert","alert-info");
+
+				if(childAgeInMonthsElement.innerHTML === ""){
+					childAgeInMonthsElement.classList.remove
+					("alert","alert-info");
+				}
+		}
+
+
+		function datepickerPremature(date){
+			let selectedDate = new Date(date);
+			let currentDate = new Date();	
+			currentDate.setHours(0,0,0,0);
+			let differenceInTime = 	currentDate.getTime() - selectedDate.getTime();
+
+			let prematureBirthValue = document.getElementById("prematureBirthValue");
+			let prematureBirthNumber = document.getElementById("prematureBirthNumber")
+			let childAgePremature = document.getElementById("childAgePremature");
+
+			document.getElementById("birthdayPremature").addEventListener("change",e =>{
+				let prematureBirthDate = new Date(e.target.value);
+				let prematureDifference = currentDate - prematureBirthDate;
+				let DMY = new DayMonthYear(prematureDifference);
+
+				childAgePremature.innerHTML = e.target.value === "" || prematureBirthDate < selectedDate ? "" : DMY.childAgeInYears >= 1 ? 
+												"<p>S obzirom da je dijete rođeno ranije, njegova korigirana dob je " + 
+												DMY.childAgeInYearsString + 
+												DMY.childAgeInMonthsRemainderString + 
+												DMY.childAgeInDaysRemainderString +  
+												" (" + 
+												DMY.childAgeInMonthsString + 
+												DMY.childAgeInDaysRemainderString + ")</p>" 
+												: 
+												"<p>S obzirom da je dijete rođeno ranije, njegova korigirana dob je " + 
+												DMY.childAgeInMonthsString + 
+												DMY.childAgeInDaysRemainderString + "</p>";
+
+				childAgePremature.classList.add("alert","alert-danger");
+
+				if(childAgePremature.innerHTML === ""){
+					childAgePremature.classList.remove("alert","alert-danger");
+				}
+
+				if(e.target.value !== ""){
+					prematureBirthValue.disabled = true;
+					prematureBirthNumber.disabled = true;
+				}else{
+					prematureBirthValue.disabled = false;
+					prematureBirthNumber.disabled = false;
+
+				}
+
+				
+			})
+		}
+
+
+		function isChildPrematureNumber(date){
+			let prematureBirthNumber = document.getElementById("prematureBirthNumber");
+			let prematureBirthValue = document.getElementById("prematureBirthValue");
+			let childAgePremature = document.getElementById("childAgePremature");
+			let birthdayPremature = document.getElementById("birthdayPremature");
+
+			let selectedDate = new Date(date);
+			let currentDate = new Date();
+
+			currentDate.setHours(0,0,0,0);
+			let differenceInTime = 	currentDate.getTime() - selectedDate.getTime();
+
+			let millisInDay = 1000*60*60*24;
+			let millisInWeek = millisInDay * 7;
+			let millisInMonth = Math.floor(millisInDay*30.4375);
+
+			let millis;
+
+
+
+			const prematureBirth = () => {
+				if(prematureBirthValue.value === "day"){
+					millis = millisInDay * prematureBirthNumber.value;
+				}else if(prematureBirthValue.value === "week"){					
+					millis = millisInWeek * prematureBirthNumber.value;
+				}else if(prematureBirthValue.value === "month"){
+					millis = millisInMonth * prematureBirthNumber.value;					
+				}
+
+				let prematureBirthDateTime = differenceInTime - millis;				
+				let DMY = new DayMonthYear(prematureBirthDateTime);
+
+				
+				childAgePremature.innerHTML = (prematureBirthNumber.value < 1 || prematureBirthValue.value === "") ? "" : DMY.childAgeInYears >= 1 ? 
+											"<p>S obzirom da je dijete rođeno ranije, njegova korigirana dob je " +  
+											DMY.childAgeInYearsString + 
+											DMY.childAgeInMonthsRemainderString + 
+											DMY.childAgeInDaysRemainderString + 
+											" (" + DMY.childAgeInMonthsString + 
+											DMY.childAgeInDaysRemainderString + ")</p>" 
+											: 
+											"<p>S obzirom da je dijete rođeno ranije, njegova korigirana dob je " + 
+											DMY.childAgeInMonthsString + 
+											DMY.childAgeInDaysRemainderString + "</p>" ;
+
+
+				childAgePremature.classList.add("alert","alert-danger");
+
+				if(childAgePremature.innerHTML === ""){
+					childAgePremature.classList.remove("alert","alert-danger");
+				}
+
+
+				if(prematureBirthNumber.value  !== "" && prematureBirthValue.value !== ""){
+					birthdayPremature.disabled = true;
+				}else{
+					birthdayPremature.disabled = false;
+				}
+				
+				
+			}
+			prematureBirth();
+
+			prematureBirthNumber.addEventListener("change",prematureBirth);
+			prematureBirthValue.addEventListener("change",prematureBirth);
+			
+			
+		}
+
+		function datepicker(){
+
+			document.getElementById("birthday").addEventListener("change",e =>{
+				
+				let input = e.target.value;
+				childAgeCalculator(input);	
+				isChildPrematureNumber(input);
+				datepickerPremature(input);
+
+							
+			});		
+		}
+		
+		datepicker();
+		
+		
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+</body>
+</html>
